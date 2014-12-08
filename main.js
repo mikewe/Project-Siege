@@ -1,17 +1,100 @@
-var dealtCards = new Array(52);
+function Deck() {
+    this.dealtCards = new Array(52);
+    this.cardsLeft = 52;
 
+    for (i = 0; i < 52; ++i) {
+        this.dealtCards[i] = false;
+    }
 
-for (i = 0; i < 52; ++i) {
-    dealtCards[i] = false;
+     this.getCard = function () {
+        var dealt = false;
+
+        do {
+           var val = Math.floor((Math.random() * 100) % 52);
+
+            if (this.cardsLeft === 0)
+                return -1;
+
+            if (!this.dealtCards[val]) {
+                this.dealtCards[val] = true;
+                dealt = true;
+                this.cardsLeft -= 1;
+            }
+        } while (!dealt);
+
+        return val;
+    }
 }
 
-var AI_Castle_Down = new Array(3);
-var PL_Castle_Down = new Array(3);
-var AI_Castle_Up = new Array(3);
-var PL_Castle_Up = new Array(3);
-var PL_Hand = [];
-var AI_Hand = [];
-var Pile = [];
+function Hand() {;
+    this.hasUpdate = false;
+    this.cards = [];
+    this.cardNames = [];
+    this.numberOfCards = 0;
+
+    this.setName = function(playerName, handType) {
+        var string = playerName + handType + this.numberOfCards;
+        this.cardNames[this.numberOfCards] = string;
+        console.log(this.cardNames[this.numberOfCards]);
+        this.numberOfCards++;
+    }
+}
+
+function Pile() {
+    this.cards = [];
+
+    this.discard = function() {
+
+    }
+}
+
+function Player(playerName) {
+    this.playerName = playerName;
+    this.downCards = new Hand();
+    this.upCards = new Hand();
+    this.hand = new Hand();
+    this.swap = function () {
+
+    }
+    this.drawCard = function(handType) {
+        var card = deck.getCard();
+        if (card !== -1) {
+
+            if (handType === "down") {
+                this.downCards.cards.push(card);
+                this.downCards.hasUpdate = true;
+                this.downCards.setName(this.playerName, handType);
+            }
+
+            else if (handType === "up") {
+                this.upCards.cards.push(card);
+                this.upCards.hasUpdate = true;
+                this.upCards.setName(this.playerName, handType);
+            }
+
+            else if (handType === "hand") {
+                this.hand.cards.push(card);
+                this.hand.hasUpdate = true;
+                this.hand.setName(this.playerName, handType);
+            }
+        }
+    }
+
+    this.sortHand = function() {
+
+    }
+    this.pickUpPile = function() {
+
+    }
+}
+
+
+
+var deck = new Deck();
+
+var player = new Player("PL");
+var AI = new Player("AI");
+
 
 startGame();
 
@@ -24,57 +107,30 @@ startGame();
  */
 function startGame() {
     for(i = 0; i < 3; ++i) {
-        AI_Castle_Down[i] = drawCard();
-        PL_Castle_Down[i] = drawCard();
-        AI_Castle_Up[i] = drawCard();
-        PL_Castle_Up[i] = drawCard();
-        AI_Hand.push(drawCard());
-
+        player.drawCard("down");
+        AI.drawCard("down");
+        player.drawCard("up");
+        AI.drawCard("up");
+        player.drawCard("hand");
+        AI.drawCard("hand");
     }
 
     updateGraphics();
 }
 
-/**
- * This function deals a random card and updates the boolean array dealtCards[]
- * to ensure that only unique cards are dealt.
- *
- * @returns {number}
- */
-function drawCard() {
-    var dealt = false;
-
-    do {
-        var val = Math.floor((Math.random() * 100) % 52);
-
-        console.log(val);
-
-        if (!dealtCards[val]) {
-            dealtCards[val] = true;
-            dealt = true;
-
-
-        }
-    } while (!dealt);
-
-    return val;
-}
-
-//function
 
 /**
  *  This function updates the game field divs that display cards with the values that
  *  are in the PL_Castle_Up and AI_Castle_up arrays.
  */
 function updateGraphics() {
-    document.getElementById("PL_Card1").innerHTML = valToText(PL_Castle_Up[0]);
-    document.getElementById("PL_Card2").innerHTML = valToText(PL_Castle_Up[1]);
-    document.getElementById("PL_Card3").innerHTML = valToText(PL_Castle_Up[2]);
-    document.getElementById("AI_Card1").innerHTML = valToText(AI_Castle_Up[0]);
-    document.getElementById("AI_Card2").innerHTML = valToText(AI_Castle_Up[1]);
-    document.getElementById("AI_Card3").innerHTML = valToText(AI_Castle_Up[2]);
-    document.getElementById("")
+    for(i = 0; i < 3; i++) {
+        document.getElementById(player.upCards.cardNames[i]).innerHTML = valToText(player.upCards.cards[i]);
+        document.getElementById(AI.upCards.cardNames[i]).innerHTML = valToText(AI.upCards.cards[i]);
+    }
 }
+
+
 
 /**
  * This function accepts a value representing a card and returns the text equivalent
