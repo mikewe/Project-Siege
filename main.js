@@ -1,16 +1,17 @@
 function Deck() {
-    this.dealtCards = new Array(52);
+    this.dealtCards = [];
     this.cardsLeft = 52;
 
     for (i = 0; i < 52; ++i) {
-        this.dealtCards[i] = false;
+        this.dealtCards.push(false);
     }
 
      this.getCard = function () {
         var dealt = false;
+        var val;
 
         do {
-           var val = Math.floor((Math.random() * 100) % 52);
+            val = Math.floor((Math.random() * 100) % 52);
 
             if (this.cardsLeft === 0)
                 return -1;
@@ -29,14 +30,13 @@ function Deck() {
 function Hand() {;
     this.hasUpdate = false;
     this.cards = [];
-    this.cardNames = [];
-    this.numberOfCards = 0;
+    this.cardID = [];
+    this.ID = 0;
 
-    this.setName = function(playerName, handType) {
-        var string = playerName + handType + this.numberOfCards;
-        this.cardNames[this.numberOfCards] = string;
-        console.log(this.cardNames[this.numberOfCards]);
-        this.numberOfCards++;
+    this.setID = function(playerName, handType) {
+        var string = playerName + handType + this.ID;
+        this.cardID.push(string);
+        this.ID++;
     }
 }
 
@@ -63,19 +63,24 @@ function Player(playerName) {
             if (handType === "down") {
                 this.downCards.cards.push(card);
                 this.downCards.hasUpdate = true;
-                this.downCards.setName(this.playerName, handType);
+                this.downCards.setID(this.playerName, handType);
             }
 
             else if (handType === "up") {
                 this.upCards.cards.push(card);
                 this.upCards.hasUpdate = true;
-                this.upCards.setName(this.playerName, handType);
+                this.upCards.setID(this.playerName, handType);
             }
 
             else if (handType === "hand") {
                 this.hand.cards.push(card);
                 this.hand.hasUpdate = true;
-                this.hand.setName(this.playerName, handType);
+                this.hand.setID(this.playerName, handType);
+
+
+                if(this.playerName === "PL") {
+                    g_drawNewCard(this.hand.cards.length - 1);
+                }
             }
         }
     }
@@ -86,25 +91,32 @@ function Player(playerName) {
     this.pickUpPile = function() {
 
     }
+    this.playCard = function(ID) {
+        var cardID = this.playerName + "hand" + ID;
+        var index =  this.hand.cardID.indexOf(cardID);
+
+        var card = this.hand.cards.splice(index, 1);
+        this.hand.cardID.splice(index, 1);
+        this.hand.ID--;
+        pile.cards.push(card);
+
+        g_destroyCard(cardID);
+
+        updateGraphics();
+    }
 }
 
-
-
 var deck = new Deck();
+var pile = new Pile();
 
 var player = new Player("PL");
 var AI = new Player("AI");
 
+var preparation = false;
+
 
 startGame();
 
-/**
- * This function initiates the game state which includes:
- * -Populate down cards
- * -Populate up cards
- * -Populate AI Hand
- * -Populate Player Hand
- */
 function startGame() {
     for(i = 0; i < 3; ++i) {
         player.drawCard("down");
@@ -118,27 +130,45 @@ function startGame() {
     updateGraphics();
 }
 
-
-/**
- *  This function updates the game field divs that display cards with the values that
- *  are in the PL_Castle_Up and AI_Castle_up arrays.
- */
-function updateGraphics() {
-    for(i = 0; i < 3; i++) {
-        document.getElementById(player.upCards.cardNames[i]).innerHTML = valToText(player.upCards.cards[i]);
-        document.getElementById(AI.upCards.cardNames[i]).innerHTML = valToText(AI.upCards.cards[i]);
+function playTurn(ID) {
+    if (preparation){}
+    else {
+        player.playCard(ID);
     }
 }
 
+function updateGraphics() {
+    if(player.upCards.hasUpdate || AI.upCards.hasUpdate) {
 
+        for(i = 0; i < 3; i++) {
+            document.getElementById(player.upCards.cardID[i]).innerHTML = valToText(player.upCards.cards[i]);
+            document.getElementById(AI.upCards.cardID[i]).innerHTML = valToText(AI.upCards.cards[i]);
+        }
 
-/**
- * This function accepts a value representing a card and returns the text equivalent
- * of that value for simplified graphics display.
- *
- * @param val
- * @returns {string}
- */
+        player.upCards.hasUpdate = false;
+        AI.upCards.hasUpdate = false;
+    }
+
+    if(pile.cards.length > 0) {
+        document.getElementById("Pile").innerHTML = valToText(pile.cards[pile.cards.length - 1]);
+    }
+}
+
+function g_drawNewCard(currentIndex) {
+    var currentID = player.hand.ID - 1;
+    var div = document.createElement("div");
+    div.id = player.hand.cardID[currentID];
+    div.className = "card";
+    div.innerHTML = valToText(player.hand.cards[currentIndex]);
+    div.onclick = function() {playTurn(currentID);};
+    document.getElementById("PL_Hand").appendChild(div);
+}
+
+function g_destroyCard(cardID) {
+    var div = document.getElementById(cardID);
+    div.parentNode.removeChild(div);
+}
+
 function valToText(val) {
     var card = val % 13;
     var suite = val / 13;
